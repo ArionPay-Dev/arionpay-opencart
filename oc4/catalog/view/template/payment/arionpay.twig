@@ -1,0 +1,33 @@
+<fieldset>
+  <legend>{{ text_instruction }}</legend>
+  <div class="border rounded p-3 mb-2">
+    <p>{{ text_redirect }}</p>
+    {% if test %}<p class="text-warning mb-0"><b>{{ text_test }}</b></p>{% endif %}
+  </div>
+  <div class="text-end">
+    <button type="button" id="button-confirm" class="btn btn-primary">{{ button_confirm }}</button>
+  </div>
+</fieldset>
+<script type="text/javascript"><!--
+$('#button-confirm').on('click', function () {
+    var element = this;
+    $.ajax({
+        url: '{{ confirm|e('js') }}'.replace(/&amp;/g, '&'),
+        dataType: 'json',
+        beforeSend: function () { $(element).button('loading'); },
+        success: function (json) {
+            if (json['error']) {
+                $(element).button('reset');
+                $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + $('<div>').text(json['error']).html() + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+            if (json['redirect']) {
+                location = json['redirect'];
+            }
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            $(element).button('reset');
+            console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+    });
+});
+//--></script>

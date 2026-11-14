@@ -1,0 +1,193 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="button" id="button-check" data-loading-text="{{ text_loading }}" class="btn btn-default"><i class="fa fa-plug"></i> {{ text_check }}</button>
+        <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div id="arionpay-alert"></div>
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="alert alert-info"><i class="fa fa-info-circle"></i> {{ text_intro }}</div>
+    {% if webhook_not_https %}
+    <div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> {{ text_webhook_not_https }}</div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+          <p class="text-muted">{{ text_keys_help }}</p>
+          <div class="form-group required{% if error_api_key %} has-error{% endif %}">
+            <label class="col-sm-2 control-label" for="input-api-key">{{ entry_api_key }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_api_key" value="{{ payment_arionpay_api_key }}" placeholder="pk_..." id="input-api-key" class="form-control" autocomplete="off" />
+              {% if error_api_key %}<div class="text-danger">{{ error_api_key }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-group required{% if error_api_secret %} has-error{% endif %}">
+            <label class="col-sm-2 control-label" for="input-api-secret">{{ entry_api_secret }}</label>
+            <div class="col-sm-10">
+              <input type="password" name="payment_arionpay_api_secret" value="" placeholder="{{ api_secret_saved ? text_saved_secret : 'sk_...' }}" id="input-api-secret" class="form-control" autocomplete="new-password" />
+              {% if error_api_secret %}<div class="text-danger">{{ error_api_secret }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-group required{% if error_webhook_secret %} has-error{% endif %}">
+            <label class="col-sm-2 control-label" for="input-webhook-secret">{{ entry_webhook_secret }}</label>
+            <div class="col-sm-10">
+              <input type="password" name="payment_arionpay_webhook_secret" value="" placeholder="{{ webhook_secret_saved ? text_saved_secret : 'whsec_...' }}" id="input-webhook-secret" class="form-control" autocomplete="new-password" />
+              {% if error_webhook_secret %}<div class="text-danger">{{ error_webhook_secret }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-test">{{ entry_test }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_test" id="input-test" class="form-control">
+                <option value="1"{% if payment_arionpay_test %} selected="selected"{% endif %}>{{ text_yes }}</option>
+                <option value="0"{% if not payment_arionpay_test %} selected="selected"{% endif %}>{{ text_no }}</option>
+              </select>
+              <p class="help-block">{{ text_test_help }}</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-webhook-url">{{ text_webhook }}</label>
+            <div class="col-sm-10">
+              <input type="text" value="{{ webhook_url }}" id="input-webhook-url" class="form-control" readonly />
+              <p class="help-block">{{ text_webhook_help }}</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-title">{{ entry_title }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_title" value="{{ payment_arionpay_title }}" placeholder="Crypto (Bitcoin, USDT and more)" id="input-title" class="form-control" />
+              <p class="help-block">{{ help_title }}</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-pending-status">{{ entry_pending_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_pending_status_id" id="input-pending-status" class="form-control">
+                {% for order_status in order_statuses %}
+                <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_pending_status_id %} selected="selected"{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-paid-status">{{ entry_paid_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_paid_status_id" id="input-paid-status" class="form-control">
+                {% for order_status in order_statuses %}
+                <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_paid_status_id %} selected="selected"{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-expired-status">{{ entry_expired_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_expired_status_id" id="input-expired-status" class="form-control">
+                <option value="0">{{ text_no_change }}</option>
+                {% for order_status in order_statuses %}
+                <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_expired_status_id %} selected="selected"{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+              <p class="help-block">{{ help_expired }}</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-geo-zone">{{ entry_geo_zone }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_geo_zone_id" id="input-geo-zone" class="form-control">
+                <option value="0">{{ text_all_zones }}</option>
+                {% for geo_zone in geo_zones %}
+                <option value="{{ geo_zone.geo_zone_id }}"{% if geo_zone.geo_zone_id == payment_arionpay_geo_zone_id %} selected="selected"{% endif %}>{{ geo_zone.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_status" id="input-status" class="form-control">
+                <option value="1"{% if payment_arionpay_status %} selected="selected"{% endif %}>{{ text_enabled }}</option>
+                <option value="0"{% if not payment_arionpay_status %} selected="selected"{% endif %}>{{ text_disabled }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-sort-order">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_sort_order" value="{{ payment_arionpay_sort_order }}" id="input-sort-order" class="form-control" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-debug">{{ entry_debug }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_debug" id="input-debug" class="form-control">
+                <option value="1"{% if payment_arionpay_debug %} selected="selected"{% endif %}>{{ text_enabled }}</option>
+                <option value="0"{% if not payment_arionpay_debug %} selected="selected"{% endif %}>{{ text_disabled }}</option>
+              </select>
+              <p class="help-block">{{ help_debug }}</p>
+            </div>
+          </div>
+          <div class="form-group{% if error_base_url %} has-error{% endif %}">
+            <label class="col-sm-2 control-label" for="input-base-url">{{ entry_base_url }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_base_url" value="{{ payment_arionpay_base_url }}" id="input-base-url" class="form-control" />
+              <p class="help-block">{{ help_base_url }}</p>
+              {% if error_base_url %}<div class="text-danger">{{ error_base_url }}</div>{% endif %}
+            </div>
+          </div>
+          <p class="text-muted"><i class="fa fa-shield"></i> {{ text_rules }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript"><!--
+$('#button-check').on('click', function () {
+	var element = this;
+	$.ajax({
+		url: '{{ check|e('js') }}'.replace(/&amp;/g, '&'),
+		type: 'post',
+		dataType: 'json',
+		data: $('#input-api-key, #input-api-secret, #input-base-url').serialize(),
+		beforeSend: function () { $(element).button('loading'); },
+		complete: function () { $(element).button('reset'); },
+		success: function (json) {
+			var box = $('#arionpay-alert').empty();
+			if (json['error']) {
+				box.append($('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> </div>').append(document.createTextNode(json['error'])));
+			}
+			if (json['success']) {
+				box.append($('<div class="alert alert-success"><i class="fa fa-check-circle"></i> </div>').append(document.createTextNode(json['success'])));
+			}
+		},
+		error: function (xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});
+});
+//--></script>
+{{ footer }}

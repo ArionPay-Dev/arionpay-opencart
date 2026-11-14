@@ -1,0 +1,181 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" id="button-check" class="btn btn-outline-secondary"><i class="fa-solid fa-plug"></i> {{ text_check }}</button>
+        <button type="submit" form="form-payment" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa-solid fa-save"></i></button>
+        <a href="{{ back }}" data-bs-toggle="tooltip" title="{{ button_back }}" class="btn btn-light"><i class="fa-solid fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> {{ text_intro }}</div>
+    {% if webhook_not_https %}
+      <div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i> {{ text_webhook_not_https }}</div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_edit }}</div>
+      <div class="card-body">
+        <form id="form-payment" action="{{ save }}" method="post" data-oc-toggle="ajax">
+          <p class="text-muted">{{ text_keys_help }}</p>
+          <div class="row mb-3 required">
+            <label for="input-api-key" class="col-sm-2 col-form-label">{{ entry_api_key }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_api_key" value="{{ payment_arionpay_api_key }}" placeholder="pk_..." id="input-api-key" class="form-control" autocomplete="off"/>
+              <div id="error-api-key" class="invalid-feedback"></div>
+            </div>
+          </div>
+          <div class="row mb-3 required">
+            <label for="input-api-secret" class="col-sm-2 col-form-label">{{ entry_api_secret }}</label>
+            <div class="col-sm-10">
+              <input type="password" name="payment_arionpay_api_secret" value="" placeholder="{{ api_secret_saved ? text_saved_secret : 'sk_...' }}" id="input-api-secret" class="form-control" autocomplete="new-password"/>
+              <div id="error-api-secret" class="invalid-feedback"></div>
+            </div>
+          </div>
+          <div class="row mb-3 required">
+            <label for="input-webhook-secret" class="col-sm-2 col-form-label">{{ entry_webhook_secret }}</label>
+            <div class="col-sm-10">
+              <input type="password" name="payment_arionpay_webhook_secret" value="" placeholder="{{ webhook_secret_saved ? text_saved_secret : 'whsec_...' }}" id="input-webhook-secret" class="form-control" autocomplete="new-password"/>
+              <div id="error-webhook-secret" class="invalid-feedback"></div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label">{{ entry_test }}</label>
+            <div class="col-sm-10">
+              <div class="form-check form-switch form-switch-lg">
+                <input type="hidden" name="payment_arionpay_test" value="0"/>
+                <input type="checkbox" name="payment_arionpay_test" value="1" id="input-test" class="form-check-input"{% if payment_arionpay_test %} checked{% endif %}/>
+              </div>
+              <div class="form-text">{{ text_test_help }}</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-webhook-url" class="col-sm-2 col-form-label">{{ text_webhook }}</label>
+            <div class="col-sm-10">
+              <input type="text" value="{{ webhook_url }}" id="input-webhook-url" class="form-control" readonly/>
+              <div class="form-text">{{ text_webhook_help }}</div>
+            </div>
+          </div>
+          <hr/>
+          <div class="row mb-3">
+            <label for="input-title" class="col-sm-2 col-form-label">{{ entry_title }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_title" value="{{ payment_arionpay_title }}" placeholder="Crypto (Bitcoin, USDT and more)" id="input-title" class="form-control"/>
+              <div class="form-text">{{ help_title }}</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-pending-status" class="col-sm-2 col-form-label">{{ entry_pending_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_pending_status_id" id="input-pending-status" class="form-select">
+                {% for order_status in order_statuses %}
+                  <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_pending_status_id %} selected{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-paid-status" class="col-sm-2 col-form-label">{{ entry_paid_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_paid_status_id" id="input-paid-status" class="form-select">
+                {% for order_status in order_statuses %}
+                  <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_paid_status_id %} selected{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-expired-status" class="col-sm-2 col-form-label">{{ entry_expired_status }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_expired_status_id" id="input-expired-status" class="form-select">
+                <option value="0">{{ text_no_change }}</option>
+                {% for order_status in order_statuses %}
+                  <option value="{{ order_status.order_status_id }}"{% if order_status.order_status_id == payment_arionpay_expired_status_id %} selected{% endif %}>{{ order_status.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">{{ help_expired }}</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-geo-zone" class="col-sm-2 col-form-label">{{ entry_geo_zone }}</label>
+            <div class="col-sm-10">
+              <select name="payment_arionpay_geo_zone_id" id="input-geo-zone" class="form-select">
+                <option value="0">{{ text_all_zones }}</option>
+                {% for geo_zone in geo_zones %}
+                  <option value="{{ geo_zone.geo_zone_id }}"{% if geo_zone.geo_zone_id == payment_arionpay_geo_zone_id %} selected{% endif %}>{{ geo_zone.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <div class="form-check form-switch form-switch-lg">
+                <input type="hidden" name="payment_arionpay_status" value="0"/>
+                <input type="checkbox" name="payment_arionpay_status" value="1" id="input-status" class="form-check-input"{% if payment_arionpay_status %} checked{% endif %}/>
+              </div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-sort-order" class="col-sm-2 col-form-label">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_sort_order" value="{{ payment_arionpay_sort_order }}" id="input-sort-order" class="form-control"/>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label">{{ entry_debug }}</label>
+            <div class="col-sm-10">
+              <div class="form-check form-switch form-switch-lg">
+                <input type="hidden" name="payment_arionpay_debug" value="0"/>
+                <input type="checkbox" name="payment_arionpay_debug" value="1" id="input-debug" class="form-check-input"{% if payment_arionpay_debug %} checked{% endif %}/>
+              </div>
+              <div class="form-text">{{ help_debug }}</div>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="input-base-url" class="col-sm-2 col-form-label">{{ entry_base_url }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="payment_arionpay_base_url" value="{{ payment_arionpay_base_url }}" id="input-base-url" class="form-control"/>
+              <div class="form-text">{{ help_base_url }}</div>
+              <div id="error-base-url" class="invalid-feedback"></div>
+            </div>
+          </div>
+          <p class="text-muted"><i class="fa-solid fa-shield-halved"></i> {{ text_rules }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript"><!--
+$('#button-check').on('click', function () {
+    var element = this;
+    $.ajax({
+        url: '{{ check|e('js') }}'.replace(/&amp;/g, '&'),
+        type: 'post',
+        dataType: 'json',
+        data: $('#form-payment').find('#input-api-key, #input-api-secret, #input-base-url').serialize(),
+        beforeSend: function () { $(element).button('loading'); },
+        complete: function () { $(element).button('reset'); },
+        success: function (json) {
+            $('.alert-dismissible').remove();
+            if (json['error']) {
+                $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + $('<div>').text(json['error']).html() + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+            if (json['success']) {
+                $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> ' + $('<div>').text(json['success']).html() + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+    });
+});
+//--></script>
+{{ footer }}
